@@ -1,0 +1,81 @@
+MIT License
+
+Copyright (c) 2025 PiCode Development Team
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## Third-Party Licenses
+
+This software includes components from the following projects:
+
+### Zellij
+- License: MIT License
+- Copyright (c) 2021-present Zellij Contributors
+- Repository: https://github.com/zellij-org/zellij
+
+### OpenAPI Specification
+- License: Apache License 2.0
+- Copyright (c) OpenAPI Initiative
+- Repository: https://github.com/OAI/OpenAPI-Specification
+
+### Rust Dependencies
+This project uses various Rust crates, each with their own licenses:
+
+- tokio: MIT License
+- serde: MIT OR Apache-2.0
+- reqwest: MIT OR Apache-2.0
+- clap: MIT OR Apache-2.0
+- anyhow: MIT OR Apache-2.0
+- tracing: MIT License
+- crossterm: MIT License
+- ratatui: MIT License
+- git2: MIT OR Apache-2.0
+- uuid: Apache-2.0 OR MIT
+- openapiv3: MIT License
+- wasm-bindgen: MIT OR Apache-2.0
+- js-sys: MIT OR Apache-2.0
+- web-sys: MIT OR Apache-2.0
+
+For a complete list of dependencies and their licenses, run:
+```
+cargo license
+```
+
+## Attribution
+
+PiCode is inspired by and designed to be compatible with Claude Code from Anthropic. 
+While PiCode is an independent implementation, we acknowledge Claude Code's influence 
+on the terminal-native AI assistant concept.
+
+## Notice
+
+This project is not affiliated with, endorsed by, or sponsored by Anthropic PBC.
+Any references to "Claude Code" are for compatibility and inspiration purposes only.
+"Claude" is a trademark of Anthropic PBC.
+
+## Contributing
+
+By contributing to this project, you agree that your contributions will be licensed
+under the same MIT License that covers the project.
+
+## Contact
+
+For questions about licensing, please contact: legal@picode.org
