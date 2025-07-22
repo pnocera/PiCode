@@ -1,0 +1,123 @@
+[package]
+name = "picode"
+version = "0.1.0"
+authors = ["PiCode Team <dev@picode.org>"]
+edition = "2021"
+description = "A terminal workspace with AI capabilities - Claude Code compatible with OpenAPI LLMs"
+license = "MIT"
+repository = "https://github.com/pnocera/PiCode"
+homepage = "https://picode.org"
+rust-version = "1.84"
+
+[[bin]]
+name = "picode"
+path = "src/main.rs"
+
+[lib]
+name = "picode"
+path = "src/lib.rs"
+
+[dependencies]
+# CLI and argument parsing
+clap = { workspace = true }
+dialoguer = { version = "0.10", default-features = false }
+
+# Async runtime and utilities
+tokio = { workspace = true }
+tokio-util = { version = "0.7" }
+async-std = { workspace = true }
+
+# HTTP client for OpenAPI LLM providers
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = "0.9"
+
+# OpenAPI and JSON schema handling
+openapiv3 = { workspace = true }
+jsonschema = "0.17"
+
+# Terminal and UI
+crossterm = { workspace = true }
+ratatui = "0.25"
+unicode-width = "0.1"
+
+# File system and Git integration
+git2 = { workspace = true }
+walkdir = { workspace = true }
+ignore = { workspace = true }
+
+# Configuration and logging
+config = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "time"] }
+dirs = "5.0"
+
+# Error handling
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+
+# Utilities
+uuid = { workspace = true }
+humantime = "2.1"
+regex = "1.10"
+
+# WASM support
+wasm-bindgen = { version = "0.2", optional = true }
+js-sys = { version = "0.3", optional = true }
+web-sys = { version = "0.3", optional = true }
+
+# Workspace dependencies
+picode-core = { path = "picode-core" }
+picode-cli = { path = "picode-cli" }
+picode-llm = { path = "picode-llm" }
+picode-hooks = { path = "picode-hooks" }
+picode-wasm = { path = "picode-wasm", optional = true }
+
+[dev-dependencies]
+tokio-test = "0.4"
+tempfile = "3.8"
+assert_cmd = "2.0"
+predicates = "3.0"
+wiremock = "0.5"
+
+[features]
+default = ["native"]
+native = []
+wasm = ["dep:picode-wasm", "wasm-bindgen", "js-sys", "web-sys"]
+
+# WASM compilation target (handled by lib section above)
+
+[profile.release]
+lto = true
+strip = true
+codegen-units = 1
+
+[workspace]
+members = [
+    "picode-cli",
+    "picode-core", 
+    "picode-llm",
+    "picode-hooks",
+    "picode-wasm",
+]
+
+# Workspace-level dependencies for consistency
+[workspace.dependencies]
+anyhow = "1.0"
+async-std = { version = "1.12", features = ["attributes", "std"] }
+chrono = { version = "0.4", features = ["serde"] }
+clap = { version = "4.4", features = ["derive", "env", "color", "suggestions"] }
+config = "0.14"
+crossterm = "0.27"
+git2 = "0.18"
+ignore = "0.4"
+openapiv3 = "2.0"
+reqwest = { version = "0.11", features = ["json", "stream"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+tokio = { version = "1.38", features = ["full"] }
+tracing = "0.1"
+uuid = { version = "1.6", features = ["v4", "v5", "serde"] }
+walkdir = "2.4"

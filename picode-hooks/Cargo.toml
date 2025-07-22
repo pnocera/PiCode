@@ -1,0 +1,23 @@
+[package]
+name = "picode-hooks"
+version = "0.1.0"
+authors = ["PiCode Team <dev@picode.org>"]
+edition = "2021"
+description = "Hooks system for PiCode"
+license = "MIT"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = "0.9"
+tokio = { workspace = true }
+async-trait = "0.1"
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+chrono = { version = "0.4", features = ["serde"] }
+tracing = { workspace = true }
+lazy_static = "1.4"
+
+[dev-dependencies]
+tokio-test = "0.4"
+tempfile = "3.8"

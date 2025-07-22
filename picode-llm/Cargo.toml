@@ -1,0 +1,23 @@
+[package]
+name = "picode-llm"
+version = "0.1.0"
+authors = ["PiCode Team <dev@picode.org>"]
+edition = "2021"
+description = "LLM integration for PiCode"
+license = "MIT"
+
+[dependencies]
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = "0.9"
+openapiv3 = { workspace = true }
+tokio = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+async-trait = "0.1"
+futures = "0.3"
+
+[dev-dependencies]
+tokio-test = "0.4"
+wiremock = "0.5"

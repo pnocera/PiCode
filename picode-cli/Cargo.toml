@@ -1,0 +1,23 @@
+[package]
+name = "picode-cli"
+version = "0.1.0"
+authors = ["PiCode Team <dev@picode.org>"]
+edition = "2021"
+description = "CLI components for PiCode terminal workspace"
+license = "MIT"
+
+[dependencies]
+clap = { workspace = true }
+clap_complete = "4.4"
+serde = { workspace = true }
+serde_yaml = "0.9"
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+picode-core = { path = "../picode-core" }
+tracing = { workspace = true }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+chrono = { version = "0.4", features = ["serde"] }
+tempfile = "3.8"
+
+[dev-dependencies]
+tokio-test = "0.4"

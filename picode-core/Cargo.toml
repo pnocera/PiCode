@@ -1,0 +1,33 @@
+[package]
+name = "picode-core"
+version = "0.1.0"
+authors = ["PiCode Team <dev@picode.org>"]
+edition = "2021"
+description = "Core functionality for PiCode terminal workspace"
+license = "MIT"
+repository = "https://github.com/pnocera/PiCode"
+
+[dependencies]
+# Async runtime
+tokio = { workspace = true }
+async-trait = "0.1"
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Error handling
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+
+# File system and utilities
+chrono = { workspace = true }
+ignore = { workspace = true }
+walkdir = { workspace = true }
+git2 = { workspace = true }
+uuid = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+tokio-test = "0.4"
+tempfile = "3.8"
