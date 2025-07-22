@@ -10,9 +10,15 @@ pub enum PiCodeError {
     
     #[error("Configuration error: {0}")]
     Config(#[from] ConfigError),
+
+    #[error("Configuration error (local): {0}")]
+    ConfigLocal(#[from] crate::config::ConfigError),
     
     #[error("CLI error: {0}")]
     Cli(#[from] CliError),
+
+    #[error("Invalid command: {0}")]
+    InvalidCommand(String),
     
     #[error("LLM error: {0}")]
     Llm(String),

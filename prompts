@@ -3,3 +3,6 @@
 
 ./claude-flow hive-mind spawn "fix https://github.com/pnocera/PiCode/issues/2 . agents should report their activity in this issue" --claude
 
+
+./claude-flow hive-mind spawn "fix https://github.com/pnocera/PiCode/issues/3 . use a 5 agents swarm . agents should report their activity in this issue" --claude
+

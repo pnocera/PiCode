@@ -8,9 +8,9 @@ pub mod config;
 pub mod error;
 pub mod logging;
 
-// Interactive and execution modules (will be implemented)
-// pub mod interactive;
-// pub mod execute;
+// Interactive and execution modules
+pub mod interactive;
+pub mod execute;
 
 // Re-export workspace crates
 pub use picode_core as core;
@@ -39,7 +39,7 @@ pub type Result<T> = std::result::Result<T, error::PiCodeError>;
 /// Initialize PiCode with default configuration
 pub async fn init() -> Result<config::Config> {
     logging::configure_logger();
-    config::Config::load_default().await.map_err(error::PiCodeError::Config)
+    config::Config::load_default().await.map_err(error::PiCodeError::ConfigLocal)
 }
 
 /// Check if PiCode is properly configured

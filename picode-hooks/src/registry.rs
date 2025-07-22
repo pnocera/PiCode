@@ -1,380 +1,192 @@
-//! Hook registry for managing hook storage and retrieval
-//!
-//! This module provides a centralized registry for managing hooks, including
-//! registration, lookup, and trigger-based filtering.
+//! Hook registry for managing installed hooks
 
-use crate::hooks::{Hook, HookError, HookResult};
-use serde::{Deserialize, Serialize};
+use crate::{Hook, HookResult, HooksError};
 use std::collections::HashMap;
-use tracing::{debug, warn};
+use std::path::PathBuf;
+use tracing::{debug, info};
 
-/// Hook registry for managing hooks
-#[derive(Debug, Default)]
+/// Registry for managing hooks
+#[derive(Debug)]
 pub struct HookRegistry {
-    /// Hooks indexed by name
+    /// Map of hook name to hook
     hooks: HashMap<String, Hook>,
-    
-    /// Trigger to hook name mappings
-    triggers: HashMap<String, Vec<String>>,
 }
 
 impl HookRegistry {
-    /// Create a new empty hook registry
+    /// Create a new hook registry
     pub fn new() -> Self {
         Self {
             hooks: HashMap::new(),
-            triggers: HashMap::new(),
         }
     }
-    
-    /// Register a hook in the registry
+
+    /// Register a hook
     pub fn register(&mut self, hook: Hook) -> HookResult<()> {
-        let name = hook.name.clone();
-        
-        // Check if hook already exists
-        if self.hooks.contains_key(&name) {
-            debug!("Replacing existing hook: {}", name);
-        }
-        
-        // Update trigger mappings
-        for trigger in &hook.triggers {
-            self.triggers
-                .entry(trigger.clone())
-                .or_insert_with(Vec::new)
-                .push(name.clone());
-        }
-        
-        // Store the hook
-        self.hooks.insert(name.clone(), hook);
-        
-        debug!("Registered hook: {}", name);
+        debug!("Registering hook: {}", hook.name);
+        self.hooks.insert(hook.name.clone(), hook);
         Ok(())
     }
-    
-    /// Unregister a hook from the registry
+
+    /// Unregister a hook
     pub fn unregister(&mut self, name: &str) -> HookResult<()> {
-        if let Some(hook) = self.hooks.remove(name) {
-            // Remove from trigger mappings
-            for trigger in &hook.triggers {
-                if let Some(hook_names) = self.triggers.get_mut(trigger) {
-                    hook_names.retain(|h| h != name);
-                    if hook_names.is_empty() {
-                        self.triggers.remove(trigger);
-                    }
-                }
-            }
-            
-            debug!("Unregistered hook: {}", name);
-            Ok(())
-        } else {
-            Err(HookError::NotFound(name.to_string()))
+        debug!("Unregistering hook: {}", name);
+        match self.hooks.remove(name) {
+            Some(_) => Ok(()),
+            None => Err(HooksError::HookNotFound(name.to_string())),
         }
     }
-    
+
     /// Get a hook by name
     pub fn get(&self, name: &str) -> Option<&Hook> {
         self.hooks.get(name)
     }
-    
+
     /// Get a mutable reference to a hook by name
     pub fn get_mut(&mut self, name: &str) -> Option<&mut Hook> {
         self.hooks.get_mut(name)
     }
-    
-    /// List all hooks
+
+    /// Check if a hook exists
+    pub fn has_hook(&self, name: &str) -> bool {
+        self.hooks.contains_key(name)
+    }
+
+    /// List all hook names
+    pub fn list_hooks(&self) -> Vec<String> {
+        self.hooks.keys().cloned().collect()
+    }
+
+    /// Get all hooks
     pub fn list(&self) -> Vec<&Hook> {
         self.hooks.values().collect()
     }
-    
-    /// List hook names
-    pub fn list_names(&self) -> Vec<&String> {
-        self.hooks.keys().collect()
-    }
-    
-    /// List hooks for a specific trigger
-    pub fn list_for_trigger(&self, trigger: &str) -> Vec<&Hook> {
-        if let Some(hook_names) = self.triggers.get(trigger) {
-            hook_names
-                .iter()
-                .filter_map(|name| self.hooks.get(name))
-                .collect()
-        } else {
-            Vec::new()
-        }
-    }
-    
-    /// List all triggers
-    pub fn list_triggers(&self) -> Vec<&String> {
-        self.triggers.keys().collect()
-    }
-    
-    /// Check if a hook exists
-    pub fn exists(&self, name: &str) -> bool {
-        self.hooks.contains_key(name)
-    }
-    
+
     /// Get the number of registered hooks
     pub fn count(&self) -> usize {
         self.hooks.len()
     }
-    
+
+    /// Clear all hooks
+    pub fn clear(&mut self) {
+        self.hooks.clear();
+    }
+
     /// Check if the registry is empty
     pub fn is_empty(&self) -> bool {
         self.hooks.is_empty()
     }
-    
-    /// Clear all hooks from the registry
-    pub fn clear(&mut self) {
-        self.hooks.clear();
-        self.triggers.clear();
-        debug!("Cleared hook registry");
-    }
-    
-    /// Enable a hook
-    pub fn enable_hook(&mut self, name: &str) -> HookResult<()> {
-        if let Some(hook) = self.hooks.get_mut(name) {
-            hook.enabled = true;
-            debug!("Enabled hook: {}", name);
-            Ok(())
-        } else {
-            Err(HookError::NotFound(name.to_string()))
+
+    /// Load hooks from a directory (simplified implementation)
+    pub fn load_from_dir(hooks_dir: PathBuf) -> HookResult<Self> {
+        let mut registry = Self::new();
+
+        if !hooks_dir.exists() {
+            info!("Hooks directory does not exist: {}", hooks_dir.display());
+            return Ok(registry);
         }
-    }
-    
-    /// Disable a hook
-    pub fn disable_hook(&mut self, name: &str) -> HookResult<()> {
-        if let Some(hook) = self.hooks.get_mut(name) {
-            hook.enabled = false;
-            debug!("Disabled hook: {}", name);
-            Ok(())
-        } else {
-            Err(HookError::NotFound(name.to_string()))
-        }
-    }
-    
-    /// Get enabled hooks for a trigger
-    pub fn list_enabled_for_trigger(&self, trigger: &str) -> Vec<&Hook> {
-        self.list_for_trigger(trigger)
-            .into_iter()
-            .filter(|hook| hook.enabled)
-            .collect()
-    }
-    
-    /// Get all enabled hooks
-    pub fn list_enabled(&self) -> Vec<&Hook> {
-        self.hooks
-            .values()
-            .filter(|hook| hook.enabled)
-            .collect()
-    }
-    
-    /// Get all disabled hooks
-    pub fn list_disabled(&self) -> Vec<&Hook> {
-        self.hooks
-            .values()
-            .filter(|hook| !hook.enabled)
-            .collect()
-    }
-    
-    /// Update hook configuration
-    pub fn update_hook(&mut self, name: &str, mut hook: Hook) -> HookResult<()> {
-        // Ensure the name matches
-        hook.name = name.to_string();
-        
-        // Remove the old hook and re-register
-        if self.exists(name) {
-            self.unregister(name)?;
-        }
-        
-        self.register(hook)?;
-        Ok(())
-    }
-    
-    /// Export registry to serializable format
-    pub fn export(&self) -> HookRegistryExport {
-        HookRegistryExport {
-            hooks: self.hooks.values().cloned().collect(),
-        }
-    }
-    
-    /// Import hooks from serialized format
-    pub fn import(&mut self, export: HookRegistryExport) -> HookResult<()> {
-        for hook in export.hooks {
-            if let Err(e) = self.register(hook) {
-                warn!("Failed to import hook: {}", e);
+
+        let entries = std::fs::read_dir(&hooks_dir)
+            .map_err(HooksError::IoError)?;
+
+        for entry in entries {
+            let entry = entry.map_err(HooksError::IoError)?;
+            let path = entry.path();
+
+            if path.is_file() {
+                // Check for executable files (on Unix) or .bat/.cmd files (on Windows)
+                let is_executable = {
+                    #[cfg(unix)]
+                    {
+                        use std::os::unix::fs::PermissionsExt;
+                        path.metadata()
+                            .map(|m| m.permissions().mode() & 0o111 != 0)
+                            .unwrap_or(false)
+                    }
+                    #[cfg(windows)]
+                    {
+                        path.extension()
+                            .and_then(|ext| ext.to_str())
+                            .map(|ext| matches!(ext.to_lowercase().as_str(), "bat" | "cmd" | "exe"))
+                            .unwrap_or(false)
+                    }
+                };
+
+                if is_executable {
+                    if let Some(name) = path.file_stem().and_then(|s| s.to_str()) {
+                        let hook = Hook::new(name.to_string(), path.clone());
+                        registry.register(hook)?;
+                        debug!("Loaded hook from file: {}", name);
+                    }
+                }
             }
         }
-        Ok(())
-    }
-    
-    /// Get registry statistics
-    pub fn stats(&self) -> HookRegistryStats {
-        let total_hooks = self.count();
-        let enabled_hooks = self.list_enabled().len();
-        let disabled_hooks = self.list_disabled().len();
-        let total_triggers = self.triggers.len();
-        
-        HookRegistryStats {
-            total_hooks,
-            enabled_hooks,
-            disabled_hooks,
-            total_triggers,
-            triggers: self.triggers.clone(),
-        }
+
+        info!("Loaded {} hooks from {}", registry.count(), hooks_dir.display());
+        Ok(registry)
     }
 }
 
-/// Serializable hook registry export format
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct HookRegistryExport {
-    /// List of hooks
-    pub hooks: Vec<Hook>,
-}
-
-/// Hook registry statistics
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct HookRegistryStats {
-    /// Total number of hooks
-    pub total_hooks: usize,
-    
-    /// Number of enabled hooks
-    pub enabled_hooks: usize,
-    
-    /// Number of disabled hooks
-    pub disabled_hooks: usize,
-    
-    /// Total number of triggers
-    pub total_triggers: usize,
-    
-    /// Trigger to hook mappings
-    pub triggers: HashMap<String, Vec<String>>,
+impl Default for HookRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::PathBuf;
-    
-    fn create_test_hook(name: &str, triggers: Vec<&str>) -> Hook {
-        let mut hook = Hook::new(name.to_string(), PathBuf::from("/tmp/test.sh"));
-        for trigger in triggers {
-            hook = hook.with_trigger(trigger.to_string());
-        }
-        hook
-    }
-    
+    use tempfile::TempDir;
+
     #[test]
     fn test_registry_basic_operations() {
         let mut registry = HookRegistry::new();
-        
         assert!(registry.is_empty());
         assert_eq!(registry.count(), 0);
-        
-        let hook = create_test_hook("test-hook", vec!["pre-commit"]);
+
+        let hook = Hook::new("test_hook".to_string(), PathBuf::from("/path/to/script"));
         registry.register(hook).unwrap();
-        
+
         assert!(!registry.is_empty());
         assert_eq!(registry.count(), 1);
-        assert!(registry.exists("test-hook"));
-        assert!(registry.get("test-hook").is_some());
+        assert!(registry.has_hook("test_hook"));
+        assert!(registry.get("test_hook").is_some());
+
+        registry.unregister("test_hook").unwrap();
+        assert!(registry.is_empty());
+        assert!(!registry.has_hook("test_hook"));
     }
-    
+
     #[test]
-    fn test_registry_trigger_mappings() {
+    fn test_registry_unregister_nonexistent() {
+        let mut registry = HookRegistry::new();
+        let result = registry.unregister("nonexistent");
+        assert!(result.is_err());
+        
+        match result {
+            Err(HooksError::HookNotFound(name)) => assert_eq!(name, "nonexistent"),
+            _ => panic!("Expected HookNotFound error"),
+        }
+    }
+
+    #[test]
+    fn test_registry_list_hooks() {
         let mut registry = HookRegistry::new();
         
-        let hook1 = create_test_hook("hook1", vec!["pre-commit", "post-commit"]);
-        let hook2 = create_test_hook("hook2", vec!["pre-commit"]);
-        
-        registry.register(hook1).unwrap();
-        registry.register(hook2).unwrap();
-        
-        let pre_commit_hooks = registry.list_for_trigger("pre-commit");
-        assert_eq!(pre_commit_hooks.len(), 2);
-        
-        let post_commit_hooks = registry.list_for_trigger("post-commit");
-        assert_eq!(post_commit_hooks.len(), 1);
-        
-        let nonexistent_hooks = registry.list_for_trigger("nonexistent");
-        assert_eq!(nonexistent_hooks.len(), 0);
+        registry.register(Hook::new("hook1".to_string(), PathBuf::from("/path/1"))).unwrap();
+        registry.register(Hook::new("hook2".to_string(), PathBuf::from("/path/2"))).unwrap();
+
+        let hooks = registry.list_hooks();
+        assert_eq!(hooks.len(), 2);
+        assert!(hooks.contains(&"hook1".to_string()));
+        assert!(hooks.contains(&"hook2".to_string()));
     }
-    
+
     #[test]
-    fn test_registry_unregister() {
-        let mut registry = HookRegistry::new();
+    fn test_load_from_nonexistent_dir() {
+        let temp_dir = TempDir::new().unwrap();
+        let nonexistent_dir = temp_dir.path().join("nonexistent");
         
-        let hook = create_test_hook("test-hook", vec!["pre-commit"]);
-        registry.register(hook).unwrap();
-        
-        assert!(registry.exists("test-hook"));
-        assert_eq!(registry.list_for_trigger("pre-commit").len(), 1);
-        
-        registry.unregister("test-hook").unwrap();
-        
-        assert!(!registry.exists("test-hook"));
-        assert_eq!(registry.list_for_trigger("pre-commit").len(), 0);
-        
-        // Unregistering non-existent hook should fail
-        assert!(registry.unregister("nonexistent").is_err());
-    }
-    
-    #[test]
-    fn test_registry_enable_disable() {
-        let mut registry = HookRegistry::new();
-        
-        let hook = create_test_hook("test-hook", vec!["pre-commit"]);
-        registry.register(hook).unwrap();
-        
-        // Hook should be enabled by default
-        let hook = registry.get("test-hook").unwrap();
-        assert!(hook.enabled);
-        
-        registry.disable_hook("test-hook").unwrap();
-        let hook = registry.get("test-hook").unwrap();
-        assert!(!hook.enabled);
-        
-        registry.enable_hook("test-hook").unwrap();
-        let hook = registry.get("test-hook").unwrap();
-        assert!(hook.enabled);
-    }
-    
-    #[test]
-    fn test_registry_stats() {
-        let mut registry = HookRegistry::new();
-        
-        let hook1 = create_test_hook("hook1", vec!["pre-commit"]);
-        let hook2 = create_test_hook("hook2", vec!["post-commit"]);
-        
-        registry.register(hook1).unwrap();
-        registry.register(hook2).unwrap();
-        registry.disable_hook("hook2").unwrap();
-        
-        let stats = registry.stats();
-        
-        assert_eq!(stats.total_hooks, 2);
-        assert_eq!(stats.enabled_hooks, 1);
-        assert_eq!(stats.disabled_hooks, 1);
-        assert_eq!(stats.total_triggers, 2);
-    }
-    
-    #[test]
-    fn test_registry_export_import() {
-        let mut registry = HookRegistry::new();
-        
-        let hook1 = create_test_hook("hook1", vec!["pre-commit"]);
-        let hook2 = create_test_hook("hook2", vec!["post-commit"]);
-        
-        registry.register(hook1).unwrap();
-        registry.register(hook2).unwrap();
-        
-        let export = registry.export();
-        assert_eq!(export.hooks.len(), 2);
-        
-        let mut new_registry = HookRegistry::new();
-        new_registry.import(export).unwrap();
-        
-        assert_eq!(new_registry.count(), 2);
-        assert!(new_registry.exists("hook1"));
-        assert!(new_registry.exists("hook2"));
+        let registry = HookRegistry::load_from_dir(nonexistent_dir).unwrap();
+        assert!(registry.is_empty());
     }
 }
